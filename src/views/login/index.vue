@@ -22,14 +22,15 @@
         <el-checkbox v-model="user.agree">我已阅读并同意用户协议和隐私条款</el-checkbox>
       </el-form-item>
       <el-form-item>
-        <el-button class="login-btn" type="primary" @click="onlogin()" :loading="loginLoading" :disabled="disabled()">登录</el-button>
+        <el-button class="login-btn" type="primary" @click="onlogin()"
+        :loading="loginLoading" :disabled="disabled()">登录</el-button>
       </el-form-item>
     </el-form>
   </div>
 </template>
 
 <script>
-import request from '@/utils/request'
+import { login } from '@/api/user'
 
 export default {
   name: 'LoginIndex',
@@ -44,10 +45,10 @@ export default {
       },
       checked: false,
       disabled: () => {
-        if (this.checked === true) {
-          return false
-        } else {
+        if (this.agree === true) {
           return true
+        } else {
+          return false
         }
       },
       loginLoading: false,
@@ -62,10 +63,19 @@ export default {
         ],
         agree: [
           {
-            validate: (rule, value, callback) => {
-              console.log(rule)
-              return false
+            // 自定义验证规则
+            // 验证通过：callback()
+            // 验证失败： callback(new Error('错误消息'))
+            validator: (rule, value, callback) => {
+              console.log(value)
+              if (!value) {
+                callback(new Error('请勾选同意用户协议'))
+              } else {
+                callback()
+              }
             },
+            // required: true,
+            // message: '请勾选同意用户协议',
             trigger: 'change'
           }
         ]
@@ -73,21 +83,23 @@ export default {
       login: () => {
       // 验证通过，提交登录
         this.loginLoading = true // 开始验证，打开 loading ，防止用户多次点击
-        request({
-          method: 'POST',
-          URL: '/mp/vl_0/authorizations',
-          // data 用来设置 POST 请求体
-          data: this.user
-        }).then(responce => {
+        login(this.user).then(responce => {
           console.log(responce)
           this.$message({
             message: '登录成功',
             type: 'success'
           })
 
+          // 把用户的登录信息存储到本地
+          // 注意,本地只能存储字符串
+          // 我们需要把对象,数组存储为JSON
+          window.localStorage.setItem('user', JSON.stringify(responce.data.data))
           // 关闭 loading
           this.loginLoading = false
           // 登录成功
+          this.$router.push({
+            name: 'home'
+          })
         }).catch(error => {
           console.log('登录失败', error)
           this.$message.error('手机号或验证码错误')
