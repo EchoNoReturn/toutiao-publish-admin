@@ -34,13 +34,35 @@ const router = new VueRouter({
   routes
 })
 
-// router.beforeEach((to, from, next) => {
+/* // router.beforeEach((to, from, next) => {
 //   // 必须使用 next() 方法，不然会什么都没有
 //   // const user = window.localStorage.getItem('user')
-//   if (to.name === 'login') next({ path: '/login' })
+//   if (to.name === 'login') next({ path: '/login' }) // 这个无效
 //   else next()
 //   console.log(to)
 //   console.log(from)
+// }) */
+
+// router.beforeEach((to, from, next) => {
+//   // 如果要访问的不是 /login，校验登录状态
+//   // 如果没有登录，则跳转到登录页面
+//   // 如果登录了，则允许通过
+//   // 允许通过
+//   // next()
+
+//   // 获取登录信息
+//   const user = JSON.parse(window.localStorage.getItem('user'))
+//   if (to.path !== '/login') {
+//     console.log('不是login,需要进行判断')
+//     if (user) {
+//       next()
+//     } else {
+//       next('/login')
+//       console.log('没有登录信息，返回登录页面')
+//     }
+//   } else {
+//     next()
+//   }
 // })
 
 export default router
