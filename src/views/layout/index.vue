@@ -26,7 +26,12 @@
             </span>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item>设置</el-dropdown-item>
-              <el-dropdown-item>退出登录</el-dropdown-item>
+              <!-- element组件默认不识别原生事件，除非内部进行了处理 -->
+              <el-dropdown-item
+              @click.native="onLogout"
+              >
+              退出登录
+              </el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
           </div>
@@ -59,7 +64,7 @@ export default ({
         name: '用户昵称',
         poto: './user_header_img.png' // v-bind:src不能绑定这样的的对象,因为poto的值不能这么写,会导致请求失败
       }, // 预留的使用当前页面的对象
-      isCollapse: true // 默认false为展开
+      isCollapse: false // 默认false为展开
     }
   },
   computed: {},
@@ -75,6 +80,34 @@ export default ({
     loadUserProfile () {
       getUserProfile().then(response => {
         console.log(response)
+      })
+    },
+    onLogout () {
+      // console.log('onlogout')
+      // 清除用户登录状态
+      // window.localStorage.removeItem('user')
+      // 返回登录页面
+      // this.$router.push('/login')
+
+      // 下面是优化了用户体验
+      this.$confirm('此操作将退出登录, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 清除用户登录状态
+        window.localStorage.removeItem('user')
+        // 返回登录页面
+        this.$router.push('/login')
+        this.$message({
+          type: 'success',
+          message: '退出登录成功!'
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消退出登录'
+        })
       })
     }
   }
