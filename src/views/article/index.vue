@@ -49,23 +49,50 @@
       <div class="text item">
         <!-- 表格数据 -->
         <el-table
-            :data="tableData"
+            :data="articles"
             class="list-table"
             style="width: 100%">
-        <el-table-column
-            prop="date"
-            label="日期"
-            width="180">
-        </el-table-column>
-        <el-table-column
-            prop="name"
-            label="姓名"
-            width="180">
-        </el-table-column>
-        <el-table-column
-            prop="address"
-            label="地址">
-        </el-table-column>
+          <el-table-column
+              prop="cover"
+              label="封面">
+              <template slot-scope="scope">
+                <img class="article-cover" v-if="scope.row.cover" :src="scope.row.cover.img[0]" alt="this is a cover">
+                <img class="article-cover" v-else :src="scope.row.cover.img[0]" alt="this is a cover">
+              </template>
+          </el-table-column>
+          <el-table-column
+              prop="name"
+              label="标题">
+          </el-table-column>
+          <el-table-column
+              label="状态">
+              <!-- 自定义列模板之后 prop 就没有用了 -->
+              <!-- 如果需要在自定义列模板中获取当前遍历项数据就需要在 template 上声明 slot-scope="scope" -->
+              <template slot-scope="scope">
+                <el-tag :type="articleStatus[scope.row.status].type">{{ articleStatus[scope.row.status].text }}</el-tag>
+                <!-- <el-tag v-if="scope.row.status === 0" type="warning">草稿</el-tag>
+                <el-tag v-else-if="scope.row.status === 1" type="">待审核</el-tag>
+                <el-tag v-else-if="scope.row.status === 2" type="success">审核通过</el-tag>
+                <el-tag v-else-if="scope.row.status === 3" type="danger">审核失败</el-tag>
+                <el-tag v-else-if="scope.row.status === 4" type="info">已删除</el-tag> -->
+              </template>
+              <!-- <el-tag>标签一</el-tag>
+              <el-tag type="success">审核通过</el-tag>
+              <el-tag type="info">待审核</el-tag>
+              <el-tag type="warning">审核失败</el-tag>
+              <el-tag type="danger">已删除</el-tag> -->
+          </el-table-column>
+          <el-table-column
+              prop="date"
+              label="日期">
+          </el-table-column>
+          <el-table-column
+              label="操作">
+              <template>
+                <el-button type="primary" icon="el-icon-edit" circle></el-button>
+                <el-button type="danger" icon="el-icon-delete" circle></el-button>
+              </template>
+          </el-table-column>
         </el-table>
         <!-- 列表分页 -->
         <el-pagination
@@ -79,6 +106,8 @@
 </template>
 
 <script>
+import { getArticle } from '@/api/article'
+
 export default ({
   name: 'ArticleIndex',
   components: {},
@@ -95,30 +124,40 @@ export default ({
         resource: '',
         desc: ''
       },
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      }]
+      articles: [
+        // 默认放了一些样式文本
+        // 0-草稿，1-待审核，2-审核通过，3-审核失败，4-已删除
+        { cover: '', name: 'name1', status: 0, date: '0001' },
+        { cover: '', name: 'name2', status: 1, date: '0001' },
+        { cover: '', name: 'name3', status: 2, date: '0001' },
+        { cover: '', name: 'name3', status: 2, date: '0001' },
+        { cover: '', name: 'name4', status: 3, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
+        { cover: '', name: 'name6', status: 0, date: '0001' }
+      ],
+      articleStatus: [
+        { status: 0, type: 'warning', text: '草稿' },
+        { status: 1, type: '', text: '待审核' },
+        { status: 2, type: 'success', text: '审核通过' },
+        { status: 3, type: 'danger', text: '审核失败' },
+        { status: 4, type: 'info', text: '已删除' }
+      ]
     }
   },
   computed: {},
   watch: {},
-  created () {},
+  created () {
+    // getArticle().then(res => {…}) // 不建议直接在生命周期中直接用这个方法，建议封装到另一个方法中？
+    this.loadArticles()
+  },
   mounted () {},
   methods: {
+    loadArticles () {
+      getArticle().then(res => {
+        // console.log(res) // 调试使用
+        this.articles = res.data.data.results
+      })
+    },
     onSubmit () {
       console.log('submit!')
     }
@@ -132,5 +171,9 @@ export default ({
 }
 .list-table {
   margin-bottom: 20px;
+}
+.article-cover {
+  width: 100px;
+  background-size: cover;
 }
 </style>
