@@ -101,10 +101,25 @@
               label="日期">
           </el-table-column>
           <el-table-column
-              label="操作">
-              <template>
-                <el-button type="primary" icon="el-icon-edit" circle></el-button>
-                <el-button type="danger" icon="el-icon-delete" circle></el-button>
+              label="操作"
+              >
+              <template slot-scope="scope">
+                <el-button
+                type="primary"
+                icon="el-icon-edit"
+                circle></el-button>
+                <el-button
+                type="danger"
+                icon="el-icon-delete"
+                @click="onDeleteArticles(scope)"
+                circle
+                ></el-button>
+                <!-- <el-button
+                type="danger"
+                icon="el-icon-delete"
+                @click="onDeleteArticles(scope.row.data.id)"
+                circle
+                ></el-button> -->
               </template>
           </el-table-column>
         </el-table>
@@ -113,7 +128,7 @@
         background
         layout="prev, pager, next"
         :page-size="pageSize"
-        :total="total_count"
+        :total="totalCount"
         @current-change="onCurrentChange"
         :disabled="loading"
         >
@@ -124,7 +139,11 @@
 </template>
 
 <script>
-import { getArticle, getArticleChannels } from '@/api/article'
+import {
+  getArticle,
+  getArticleChannels,
+  deleteArticle
+} from '@/api/article'
 
 export default ({
   name: 'ArticleIndex',
@@ -145,11 +164,20 @@ export default ({
       articles: [
         // 默认放了一些样式文本
         // 0-草稿，1-待审核，2-审核通过，3-审核失败，4-已删除
-        { cover: '', name: 'name1', status: 0, date: '0001' },
         { cover: '', name: 'name2', status: 1, date: '0001' },
+        { cover: '', name: 'name1', status: 0, date: '0001' },
         { cover: '', name: 'name3', status: 2, date: '0001' },
         { cover: '', name: 'name3', status: 2, date: '0001' },
         { cover: '', name: 'name4', status: 3, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
+        { cover: '', name: 'name5', status: 4, date: '0001' },
         { cover: '', name: 'name5', status: 4, date: '0001' },
         { cover: '', name: 'name6', status: 0, date: '0001' }
       ],
@@ -160,18 +188,18 @@ export default ({
         { status: 3, type: 'danger', text: '审核失败' },
         { status: 4, type: 'info', text: '已删除' }
       ],
-      totalCount: 7, // 总数居条数
-      pageSize: 20, // 每页大小
+      totalCount: 16, // 总数居条数
+      pageSize: 10, // 每页大小
       status: null, // 查询文章的状态，不传为null，代表全部
       channels: [], // 文章频道列表
       channelsId: null, // 查询文章频道
-      loading: true
+      loading: false // 默认为 false ，当为 true 时会变成一直加载的状态; 这里我用 loading 同时控制了表单和分页组件，优化了交互，目前注释了
     }
   },
   computed: {},
   watch: {},
   created () {
-    // getArticle().then(res => {…}) // 不建议直接在生命周期中直接用这个方法，建议封装到另一个方法中？
+    // getArticle().then(res => {…}) // 不建议直接在生命周期中直接用这个方法，建议封装到另一个方法中？-->目的：方便复用，这个页面会多次用到这个方法
     this.loadArticles()
     this.loadChannels()
   },
@@ -198,12 +226,33 @@ export default ({
     },
     onCurrentChange (page) {
       console.log(page)
-      // this.loading = true
+      // this.loading = true // 开启加载提示
       this.loadArticles(page)
     },
     loadChannels () {
       getArticleChannels().then(res => {
         this.channels = res.data.data.channels
+      })
+    },
+    onDeleteArticles (articleId) {
+      this.$confirm('此操作将删除该文章, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 调用删除方法
+        console.log('删除成功！')
+        deleteArticle(articleId.toString()).then(res => { console.log(res) })
+        this.$message({
+          type: 'success',
+          message: '删除成功!'
+        })
+      }).catch(() => {
+        console.log('取消删除！')
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
       })
     }
   }

@@ -16,9 +16,21 @@ export const getArticle = params => {
     params
   })
 }
-export const getArticleChannels = params => {
+/**
+ * 获取频道
+ * */
+export const getArticleChannels = () => {
   return request({
     method: 'GET',
     url: '/mp/v1'
+  })
+}
+/**
+ * 删除文章
+ * */
+export const deleteArticle = (articlesId) => {
+  return request({
+    method: 'DELETE',
+    url: `/mp/v1/${articlesId}`
   })
 }
