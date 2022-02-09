@@ -16,3 +16,9 @@ export const getArticle = params => {
     params
   })
 }
+export const getArticleChannels = params => {
+  return request({
+    method: 'GET',
+    url: '/mp/v1'
+  })
+}

@@ -12,19 +12,27 @@
             <!-- 表单 -->
           <el-form ref="form" :model="form" label-width="80px">
               <el-form-item label="状态">
-                  <el-radio-group v-model="form.resource">
-                  <el-radio label="全部"></el-radio>
-                  <el-radio label="草稿"></el-radio>
-                  <el-radio label="待审核"></el-radio>
-                  <el-radio label="审核通过"></el-radio>
-                  <el-radio label="审核失败"></el-radio>
-                  <el-radio label="已删除"></el-radio>
+                  <el-radio-group v-model="status">
+                  <el-radio :label="null">全部</el-radio>
+                  <el-radio :label="0">草稿</el-radio>
+                  <el-radio :label="1">待审核</el-radio>
+                  <el-radio :label="2">审核通过</el-radio>
+                  <el-radio :label="3">审核失败</el-radio>
+                  <el-radio :label="4">已删除</el-radio>
                   </el-radio-group>
               </el-form-item>
               <el-form-item label="频道">
-                  <el-select v-model="form.region" placeholder="请选择频道">
-                  <el-option label="区域一" value="shanghai"></el-option>
-                  <el-option label="区域二" value="beijing"></el-option>
+                  <el-select v-model="channelsId" placeholder="请选择频道">
+                    <el-option
+                    label="全部"
+                    :value="null"
+                    ></el-option>
+                    <el-option
+                    v-for="{channels, index} in channels"
+                    :key="index"
+                    :label="channels.name"
+                    :value="channels.id"
+                    ></el-option>
                   </el-select>
               </el-form-item>
               <el-form-item label="日期">
@@ -33,32 +41,38 @@
                   type="datetimerange"
                   range-separator="至"
                   start-placeholder="开始日期"
-                  end-placeholder="结束日期">
+                  end-placeholder="结束日期"
+                  format="yyyy-MM-dd"
+                  value-format="yyyy-MM-dd"
+                  >
                   </el-date-picker>
               </el-form-item>
               <el-form-item>
-                  <el-button type="primary" @click="onSubmit">筛选</el-button>
+                <!--
+                  button 按钮的 clinck 事件有个默认参数
+                  当你没有指定参数的时候，它还会传递一个没有用的数据
+                 -->
+                  <el-button type="primary" @click="loadArticles(1)">查询</el-button>
               </el-form-item>
           </el-form>
         </div>
     </el-card>
     <el-card class="box-card">
         <div slot="header" class="clearfix">
-          根据筛选条件，共查询到 2344 条结果：
+          根据筛选条件，共查询到 {{ totalCount }} 条结果：
         </div>
       <div class="text item">
         <!-- 表格数据 -->
         <el-table
             :data="articles"
             class="list-table"
-            style="width: 100%">
+            style="width: 100%"
+            v-loading="loading"
+            >
           <el-table-column
               prop="cover"
               label="封面">
-              <template slot-scope="scope">
-                <img class="article-cover" v-if="scope.row.cover" :src="scope.row.cover.img[0]" alt="this is a cover">
-                <img class="article-cover" v-else :src="scope.row.cover.img[0]" alt="this is a cover">
-              </template>
+              <div>this is a cover</div>
           </el-table-column>
           <el-table-column
               prop="name"
@@ -98,7 +112,11 @@
         <el-pagination
         background
         layout="prev, pager, next"
-        :total="100">
+        :page-size="pageSize"
+        :total="total_count"
+        @current-change="onCurrentChange"
+        :disabled="loading"
+        >
         </el-pagination>
       </div>
     </el-card>
@@ -106,7 +124,7 @@
 </template>
 
 <script>
-import { getArticle } from '@/api/article'
+import { getArticle, getArticleChannels } from '@/api/article'
 
 export default ({
   name: 'ArticleIndex',
@@ -117,7 +135,7 @@ export default ({
       form: {
         name: '',
         region: '',
-        date1: '',
+        date1: null,
         date2: '',
         delivery: false,
         type: [],
@@ -141,7 +159,13 @@ export default ({
         { status: 2, type: 'success', text: '审核通过' },
         { status: 3, type: 'danger', text: '审核失败' },
         { status: 4, type: 'info', text: '已删除' }
-      ]
+      ],
+      totalCount: 7, // 总数居条数
+      pageSize: 20, // 每页大小
+      status: null, // 查询文章的状态，不传为null，代表全部
+      channels: [], // 文章频道列表
+      channelsId: null, // 查询文章频道
+      loading: true
     }
   },
   computed: {},
@@ -149,17 +173,38 @@ export default ({
   created () {
     // getArticle().then(res => {…}) // 不建议直接在生命周期中直接用这个方法，建议封装到另一个方法中？
     this.loadArticles()
+    this.loadChannels()
   },
   mounted () {},
   methods: {
-    loadArticles () {
-      getArticle().then(res => {
+    loadArticles (page = 1) {
+      // 展示加载中
+      // this.loading = true
+      getArticle({
+        page,
+        per_page: this.pageSize,
+        status: this.status,
+        channel_id: this.channelsId,
+        start_pubdate: this.form.date1 ? this.form.date1[0] : null,
+        end_pubdate: this.form.date1 ? this.form.date1[1] : null
+      }).then(res => {
         // console.log(res) // 调试使用
+        const { results, total_count: totalCount } = res.date.date // 不能使用_去定义解构名，遇到此种情况需要重命名（即冒号后面加上重命名的名字即可）
+        this.totalCount = totalCount
+        this.articles = results
         this.articles = res.data.data.results
+        this.loading = false // 关闭加载提示
       })
     },
-    onSubmit () {
-      console.log('submit!')
+    onCurrentChange (page) {
+      console.log(page)
+      // this.loading = true
+      this.loadArticles(page)
+    },
+    loadChannels () {
+      getArticleChannels().then(res => {
+        this.channels = res.data.data.channels
+      })
     }
   }
 })
