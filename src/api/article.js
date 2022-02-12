@@ -34,3 +34,17 @@ export const deleteArticle = (articlesId) => {
     url: `/mp/v1/${articlesId}`
   })
 }
+/**
+ * 发布文章
+ * */
+export const addArticle = (data, draft = false) => {
+  return request({
+    method: 'POST',
+    url: '/mp/v1/fjisa',
+    params: {
+      draft // 是否保存为草稿
+    }
+  },
+  data
+  )
+}

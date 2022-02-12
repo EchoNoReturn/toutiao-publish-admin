@@ -16,10 +16,18 @@
             <el-input v-model="article.title"></el-input>
           </el-form-item>
           <el-form-item label="频道">
-            <el-select v-model="article.channels" placeholder="请选择频道">
-              <el-option label="区域一" value="shanghai"></el-option>
-              <el-option label="区域二" value="beijing"></el-option>
-            </el-select>
+            <el-select v-model="article.channel_id" placeholder="请选择频道">
+                    <el-option
+                    label="全部(需要删除此项)"
+                    :value="null"
+                    ></el-option>
+                    <el-option
+                    v-for="{channels, index} in article.channels"
+                    :key="index"
+                    :label="channels.name"
+                    :value="channels.id"
+                    ></el-option>
+                  </el-select>
           </el-form-item>
           <el-form-item label="内容">
             <el-input type="textarea" v-model="article.content"></el-input>
@@ -34,8 +42,8 @@
             </el-radio-group>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="onPublish">发布</el-button>
-            <el-button>保存草稿</el-button>
+            <el-button type="primary" @click="onPublish(false)">发布</el-button>
+            <el-button @click="onPublish(true)">保存草稿</el-button>
           </el-form-item>
         </el-form>
         <!-- /表单 -->
@@ -45,6 +53,7 @@
 </template>
 
 <script>
+import { getArticleChannels, addArticle } from '@/api/article.js'
 export default ({
   name: 'Publish',
   components: {},
@@ -53,7 +62,8 @@ export default ({
     return {
       article: {
         title: '', // 标题
-        channels: null, // 频道信息
+        channels: [], // 频道列表
+        channel_id: null, // 选中的频道
         content: '', // 内容信息
         cover: {
           img: [], // 封面的图片
@@ -64,11 +74,27 @@ export default ({
   },
   computed: {},
   watch: {},
-  created () {},
+  created () {
+    this.loadChannles()
+  },
   mounted () {},
   methods: {
-    onPublish () {
+    loadChannles () {
+      getArticleChannels().then(res => {
+        // console.log(res)
+        this.article.channels = res.data.data.channels
+      })
+    },
+    onPublish (draft = false) {
       console.log('submit!')
+      addArticle(this.article, draft).then(res => {
+        // 提交成功就有res了，就可以直接处理了
+        // console.log(res)
+        this.$message({
+          message: '发布成功',
+          type: 'success'
+        })
+      })
     }
   }
 })
